@@ -1,6 +1,6 @@
 require('dotenv').config();
 const express = require('express');
-const mongoose = require('mongoose');
+const cors = require('cors');
 const nodeCrypto = require('crypto');
 
 if (typeof globalThis.crypto === 'undefined') {
@@ -10,38 +10,29 @@ if (typeof global.crypto === 'undefined') {
   global.crypto = globalThis.crypto;
 }
 
+const connectDB = require('./config/db');
+
+connectDB();
+
 const app = express();
 const port = process.env.PORT || 5000;
-const uri = process.env.MONGO_URI;
-const dbName = process.env.MONGO_DBNAME;
 
-if (!uri) {
-  console.error('Error: MONGO_URI is not set in .env');
-  process.exit(1);
-}
+app.use(cors());
+app.use(express.json());
 
-mongoose.set('strictQuery', false);
-
-mongoose
-  .connect(uri, {
-    dbName,
-  })
-  .then(() => {
-    console.log('MongoDB connected successfully');
-    app.listen(port, () => {
-      console.log(`Server is running on http://localhost:${port}`);
-    });
-  })
-  .catch((err) => {
-    console.error('MongoDB connection failed:');
-    console.error('ERROR OBJECT:', err);
-    console.error('ERROR NAME:', err.name);
-    console.error('ERROR MESSAGE:', err.message);
-    console.error('ERROR STACK:');
-    console.error(err.stack);
-    process.exit(1);
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({
+    message: err.message,
   });
+});
+
+app.use('/api/atm', require('./routes/atmRoutes'));
 
 app.get('/', (req, res) => {
-  res.send('Backend is running');
+  res.send('ATM API Server is running');
+});
+
+app.listen(port, () => {
+  console.log(`Server is running on http://localhost:${port}`);
 });
