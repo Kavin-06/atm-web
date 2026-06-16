@@ -4,108 +4,112 @@ import {
   deposit,
   withdraw,
 } from "../services/api";
+import "./dashboard.css";
 
 function Dashboard({ user, onLogout }) {
   const [balance, setBalance] = useState(user.balance);
   const [amount, setAmount] = useState("");
+  const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState("");
+
+  const showMessage = (text, type) => {
+    setMessage(text);
+    setMessageType(type);
+    setTimeout(() => setMessage(""), 3000);
+  };
 
   const fetchBalance = async () => {
     try {
-      const response = await getBalance(
-        user.accountNumber
-      );
+      const response = await getBalance(user.accountNumber);
       setBalance(response.data.balance);
+      showMessage("Balance updated successfully", "success");
     } catch (error) {
+      const errorMsg = error.response?.data?.message || "Failed to fetch balance";
+      showMessage(errorMsg, "error");
       console.error(error);
     }
   };
 
   const handleDeposit = async () => {
     try {
-      await deposit(
-        user.accountNumber,
-        Number(amount)
-      );
+      if (!amount || Number(amount) <= 0) {
+        showMessage("Please enter a valid amount", "error");
+        return;
+      }
 
-      await fetchBalance();
+      const response = await deposit(user.accountNumber, Number(amount));
+      setBalance(response.data.balance);
       setAmount("");
+      showMessage(response.data.message || "Deposit successful", "success");
     } catch (error) {
+      const errorMsg = error.response?.data?.message || "Deposit failed";
+      showMessage(errorMsg, "error");
       console.error(error);
     }
   };
 
   const handleWithdraw = async () => {
     try {
-      await withdraw(
-        user.accountNumber,
-        Number(amount)
-      );
+      if (!amount || Number(amount) <= 0) {
+        showMessage("Please enter a valid amount", "error");
+        return;
+      }
 
-      await fetchBalance();
+      const response = await withdraw(user.accountNumber, Number(amount));
+      setBalance(response.data.balance);
       setAmount("");
-    } catch {
-      alert("Insufficient Balance");
+      showMessage(response.data.message || "Withdrawal successful", "success");
+    } catch (error) {
+      const errorMsg = error.response?.data?.message || "Withdrawal failed";
+      showMessage(errorMsg, "error");
+      console.error(error);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-r from-indigo-600 to-purple-700 flex items-center justify-center">
-      <div className="bg-white w-[450px] p-8 rounded-2xl shadow-2xl">
-        
-        {/* Logout Button */}
-        <div className="flex justify-end mb-4">
-          <button
-            onClick={onLogout}
-            className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg"
-          >
+    <div className="dashboard-container">
+      <div className="dashboard-card">
+        <div className="dashboard-header">
+          <h1 className="dashboard-title">Welcome, {user.name}</h1>
+          <button onClick={onLogout} className="logout-button">
             Logout
           </button>
         </div>
 
-        <h1 className="text-3xl font-bold text-center mb-4">
-          Welcome, {user.name}
-        </h1>
-
-        <div className="bg-indigo-50 rounded-xl p-5 mb-6 text-center">
-          <p className="text-gray-500">
-            Current Balance
-          </p>
-
-          <h2 className="text-4xl font-bold text-indigo-600">
-            ₹{balance}
-          </h2>
+        <div className="balance-display">
+          <p className="balance-label">Current Balance</p>
+          <h2 className="balance-amount">₹{balance.toFixed(2)}</h2>
         </div>
 
-        <button
-          onClick={fetchBalance}
-          className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg mb-4"
-        >
+        <button onClick={fetchBalance} className="dashboard-button btn-check-balance">
           Check Balance
         </button>
 
-        <input
-          type="number"
-          placeholder="Enter Amount"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          className="w-full border p-3 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-        />
+        <div className="dashboard-form">
+          <input
+            type="number"
+            placeholder="Enter Amount"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            className="dashboard-input"
+            min="0"
+          />
 
-        <div className="grid grid-cols-2 gap-4">
-          <button
-            onClick={handleDeposit}
-            className="bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg"
-          >
-            Deposit
-          </button>
-
-          <button
-            onClick={handleWithdraw}
-            className="bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg"
-          >
-            Withdraw
-          </button>
+          <div className="button-group">
+            <button onClick={handleDeposit} className="dashboard-button btn-deposit">
+              Deposit
+            </button>
+            <button onClick={handleWithdraw} className="dashboard-button btn-withdraw">
+              Withdraw
+            </button>
+          </div>
         </div>
+
+        {message && (
+          <div className={`message ${message ? `message-${messageType}` : ""}`}>
+            {message}
+          </div>
+        )}
       </div>
     </div>
   );

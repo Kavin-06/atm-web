@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { login } from "../services/api";
+import "./auth.css";
 
 function Login({ setUser, setShowLogin }) {
   const [accountNumber, setAccountNumber] = useState("");
@@ -9,34 +10,32 @@ function Login({ setUser, setShowLogin }) {
     e.preventDefault();
 
     try {
-      const response = await login(
-        accountNumber,
-        pin
-      );
+      if (!accountNumber || !pin) {
+        alert("Please fill in all fields");
+        return;
+      }
 
+      const response = await login(accountNumber, pin);
       setUser(response.data);
     } catch (error) {
-      alert("Invalid Account Number or PIN");
+      const errorMessage = error.response?.data?.message || "Invalid Account Number or PIN";
+      alert(errorMessage);
       console.error(error);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-r from-indigo-600 to-purple-700 flex items-center justify-center">
-      <div className="bg-white p-8 rounded-2xl shadow-2xl w-[400px]">
-        <h1 className="text-3xl font-bold text-center mb-6">
-          ATM Login
-        </h1>
+    <div className="auth-container">
+      <div className="auth-card">
+        <h1 className="auth-title">ATM Login</h1>
 
-        <form onSubmit={handleLogin}>
+        <form onSubmit={handleLogin} className="auth-form">
           <input
             type="text"
             placeholder="Account Number"
             value={accountNumber}
-            onChange={(e) =>
-              setAccountNumber(e.target.value)
-            }
-            className="w-full border p-3 rounded-lg mb-4"
+            onChange={(e) => setAccountNumber(e.target.value)}
+            className="auth-input"
             required
           />
 
@@ -44,26 +43,21 @@ function Login({ setUser, setShowLogin }) {
             type="password"
             placeholder="PIN"
             value={pin}
-            onChange={(e) =>
-              setPin(e.target.value)
-            }
-            className="w-full border p-3 rounded-lg mb-4"
+            onChange={(e) => setPin(e.target.value)}
+            className="auth-input"
             required
           />
 
-          <button
-            type="submit"
-            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-lg"
-          >
+          <button type="submit" className="auth-button">
             Login
           </button>
         </form>
 
-        <p className="text-center mt-4">
-          Don't have an account?{" "}
+        <p className="auth-footer">
+          Don't have an account?
           <button
             onClick={() => setShowLogin(false)}
-            className="text-indigo-600 font-semibold"
+            className="auth-footer-link"
           >
             Sign Up
           </button>
