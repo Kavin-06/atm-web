@@ -33,12 +33,17 @@ app.get('/', (req, res) => {
 
 const startServer = async () => {
   await connectDB();
-  app.listen(port, () => {
-    console.log(`Server is running on http://localhost:${port}`);
-  });
+  if (process.env.VERCEL !== '1' && require.main === module) {
+    app.listen(port, () => {
+      console.log(`Server is running on http://localhost:${port}`);
+    });
+  }
 };
 
 startServer().catch((err) => {
   console.error('Failed to start server:', err.message);
   process.exit(1);
 });
+
+module.exports = app;
+
