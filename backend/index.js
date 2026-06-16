@@ -12,8 +12,6 @@ if (typeof global.crypto === 'undefined') {
 
 const connectDB = require('./config/db');
 
-connectDB();
-
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -33,6 +31,14 @@ app.get('/', (req, res) => {
   res.send('ATM API Server is running');
 });
 
-app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
+const startServer = async () => {
+  await connectDB();
+  app.listen(port, () => {
+    console.log(`Server is running on http://localhost:${port}`);
+  });
+};
+
+startServer().catch((err) => {
+  console.error('Failed to start server:', err.message);
+  process.exit(1);
 });
