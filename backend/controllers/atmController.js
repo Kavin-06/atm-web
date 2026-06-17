@@ -4,13 +4,44 @@ const signup = async (req, res) => {
   try {
     const { name, accountNumber, pin } = req.body;
 
+    // Validation
+    if (!name || !accountNumber || !pin) {
+      return res.status(400).json({
+        message: "All fields are required",
+      });
+    }
+
+    if (!/^\d+$/.test(accountNumber)) {
+      return res.status(400).json({
+        message: "Account number must contain only digits",
+      });
+    }
+
+    if (accountNumber.length < 4) {
+      return res.status(400).json({
+        message: "Account number must be at least 4 digits",
+      });
+    }
+
+    if (!/^\d{4,6}$/.test(pin)) {
+      return res.status(400).json({
+        message: "PIN must be 4-6 digits",
+      });
+    }
+
+    if (name.length < 2) {
+      return res.status(400).json({
+        message: "Name must be at least 2 characters",
+      });
+    }
+
     const existingUser = await Account.findOne({
       accountNumber,
     });
 
     if (existingUser) {
       return res.status(400).json({
-        message: "Account already exists",
+        message: "This account number already exists",
       });
     }
 
@@ -26,9 +57,27 @@ const signup = async (req, res) => {
       account,
     });
   } catch (error) {
-    console.log(error);
+    console.error("Signup error:", error);
+    
+    // Handle Mongoose validation errors
+    if (error.name === "ValidationError") {
+      const messages = Object.values(error.errors)
+        .map(err => err.message)
+        .join(", ");
+      return res.status(400).json({
+        message: messages,
+      });
+    }
+
+    // Handle duplicate key error
+    if (error.code === 11000) {
+      return res.status(400).json({
+        message: "Account number already exists",
+      });
+    }
+
     res.status(500).json({
-      message: "Server Error",
+      message: error.message || "Server Error",
     });
   }
 };
